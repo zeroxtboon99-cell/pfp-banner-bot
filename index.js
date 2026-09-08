@@ -13,13 +13,13 @@ const client = new Client({
 const mediaStore = new Map();
 const SERVER_NAME = "Ultra ︱ PFPs & Banners";
 
-// دالة جلب الصورة عبر Axios لتفادي كراش fetch
+// دالة جلب الصور بأمان كـ Buffer
 async function fetchBuffer(url) {
   const response = await axios.get(url, { responseType: "arraybuffer" });
   return Buffer.from(response.data);
 }
 
-// دالة قص وتغطية البانر
+// دالة قص وتغطية البانر احترافياً
 function drawImageCover(ctx, img, x, y, w, h) {
   const imgRatio = img.width / img.height;
   const targetRatio = w / h;
@@ -40,41 +40,44 @@ function drawImageCover(ctx, img, x, y, w, h) {
   ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
 }
 
-// دالة تصميم الكارت
-async function createProfileCard(avatarUrl, bannerUrl, username) {
-  const canvas = createCanvas(600, 420);
+// دالة رسم كارت البروفايل
+async function createProfileCard(avatarBuffer, bannerBuffer, username) {
+  // أبعاد اللوحة الإجمالية 600x320
+  const canvas = createCanvas(600, 320);
   const ctx = canvas.getContext("2d");
 
-  // 1. الخلفية
+  // 1. الخلفية السوداء للكارت
   ctx.fillStyle = "#0b0b0e";
   ctx.beginPath();
-  ctx.roundRect(0, 0, 600, 420, 16);
+  ctx.roundRect(0, 0, 600, 320, 16);
   ctx.fill();
 
-  // 2. البانر
-  if (bannerUrl) {
+  // 2. البانر العلوي (ارتفاع 160px)
+  if (bannerBuffer) {
     try {
-      const bannerImg = await loadImage(bannerUrl);
-      drawImageCover(ctx, bannerImg, 0, 0, 600, 210);
+      const bannerImg = await loadImage(bannerBuffer);
+      drawImageCover(ctx, bannerImg, 0, 0, 600, 160);
     } catch {
       ctx.fillStyle = "#2b2d31";
-      ctx.fillRect(0, 0, 600, 210);
+      ctx.fillRect(0, 0, 600, 160);
     }
   } else {
     ctx.fillStyle = "#2b2d31";
-    ctx.fillRect(0, 0, 600, 210);
+    ctx.fillRect(0, 0, 600, 160);
   }
 
-  // 3. الأفاتار (دائري مضبوط)
-  const ax = 35, ay = 145, asize = 120;
+  // 3. الأفاتار (Avatar)
+  const ax = 30, ay = 100, asize = 105;
+  
+  // حافة سوداء حول الأفاتار
   ctx.fillStyle = "#0b0b0e";
   ctx.beginPath();
-  ctx.arc(ax + asize / 2, ay + asize / 2, asize / 2 + 6, 0, Math.PI * 2);
+  ctx.arc(ax + asize / 2, ay + asize / 2, asize / 2 + 5, 0, Math.PI * 2);
   ctx.fill();
 
-  if (avatarUrl) {
+  if (avatarBuffer) {
     try {
-      const avatarImg = await loadImage(avatarUrl);
+      const avatarImg = await loadImage(avatarBuffer);
       ctx.save();
       ctx.beginPath();
       ctx.arc(ax + asize / 2, ay + asize / 2, asize / 2, 0, Math.PI * 2);
@@ -84,27 +87,23 @@ async function createProfileCard(avatarUrl, bannerUrl, username) {
     } catch {}
   }
 
-  // 4. نقطة DND
-  const sx = ax + asize - 18, sy = ay + asize - 18;
-  ctx.fillStyle = "#0b0b0e"; ctx.beginPath(); ctx.arc(sx, sy, 16, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = "#f23f43"; ctx.beginPath(); ctx.arc(sx, sy, 11, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = "#0b0b0e"; ctx.fillRect(sx - 7, sy - 3, 14, 6);
+  // 4. حالة DND (النقطة الحمراء)
+  const sx = ax + asize - 14, sy = ay + asize - 14;
+  ctx.fillStyle = "#0b0b0e"; ctx.beginPath(); ctx.arc(sx, sy, 14, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#f23f43"; ctx.beginPath(); ctx.arc(sx, sy, 9, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#0b0b0e"; ctx.fillRect(sx - 5, sy - 2, 10, 4);
 
-  // 5. اسم السيرفر
+  // 5. اسم السيرفر (في جهة اليمين مباشرة - حسب السهم الأول)
   ctx.fillStyle = "#FFFFFF";
-  ctx.font = "bold 20px Arial, sans-serif";
+  ctx.font = "bold 17px Arial, sans-serif";
   ctx.textAlign = "right";
-  ctx.fillText(SERVER_NAME, 565, 260);
+  ctx.fillText(SERVER_NAME, 570, 190);
 
-  // 6. اسم المستخدم والحقوق
+  // 6. حقوق المستخدم by: username (في جهة اليسار أسفل الكارت - حسب السهم الثاني)
   ctx.textAlign = "left";
   ctx.fillStyle = "#FFFFFF"; 
-  ctx.font = "bold 26px Arial, sans-serif"; 
-  ctx.fillText(username, 35, 320);
-
-  ctx.fillStyle = "#949ba4"; 
-  ctx.font = "16px Arial, sans-serif"; 
-  ctx.fillText(`by: ${username}`, 35, 355);
+  ctx.font = "bold 20px Arial, sans-serif"; 
+  ctx.fillText(`by: ${username}`, 40, 275);
 
   return canvas.toBuffer("image/png");
 }
@@ -165,7 +164,7 @@ client.on("messageCreate", async (message) => {
 
     setTimeout(() => message.delete().catch(() => {}), 1000);
   } catch (err) {
-    console.error("حدث خطأ أثناء المعالجة:", err);
+    console.error("خطأ:", err);
   }
 });
 
