@@ -1,5 +1,6 @@
-hereconst { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require("discord.js");
+const { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require("discord.js");
 const { createCanvas, loadImage } = require("@napi-rs/canvas");
+const axios = require("axios");
 
 const client = new Client({ 
   intents: [
@@ -10,11 +11,15 @@ const client = new Client({
 });
 
 const mediaStore = new Map();
-
-// اسم السيرفر المخصص
 const SERVER_NAME = "Ultra ︱ PFPs & Banners";
 
-// دالة قص وتغطية البانر احترافياً
+// دالة جلب الصورة عبر Axios لتفادي كراش fetch
+async function fetchBuffer(url) {
+  const response = await axios.get(url, { responseType: "arraybuffer" });
+  return Buffer.from(response.data);
+}
+
+// دالة قص وتغطية البانر
 function drawImageCover(ctx, img, x, y, w, h) {
   const imgRatio = img.width / img.height;
   const targetRatio = w / h;
@@ -35,19 +40,18 @@ function drawImageCover(ctx, img, x, y, w, h) {
   ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
 }
 
-// دالة تصميم وصنع البطاقة
+// دالة تصميم الكارت
 async function createProfileCard(avatarUrl, bannerUrl, username) {
-  // تكبير ارتفاع اللوحة إلى 420px لتتسع لكافة العناصر والنصوص بوضوح
   const canvas = createCanvas(600, 420);
   const ctx = canvas.getContext("2d");
 
-  // 1. خلفية الكارت الرئيسية
+  // 1. الخلفية
   ctx.fillStyle = "#0b0b0e";
   ctx.beginPath();
   ctx.roundRect(0, 0, 600, 420, 16);
   ctx.fill();
 
-  // 2. رسم البانر العلوي (بارتفاع 210px)
+  // 2. البانر
   if (bannerUrl) {
     try {
       const bannerImg = await loadImage(bannerUrl);
@@ -61,12 +65,8 @@ async function createProfileCard(avatarUrl, bannerUrl, username) {
     ctx.fillRect(0, 0, 600, 210);
   }
 
-  // 3. رسم الأفاتار متناسق الأبعاد تماماً (دائرة موزونة)
-  const ax = 35;
-  const ay = 145;
-  const asize = 120;
-
-  // الإطار الأسود حول الأفاتار
+  // 3. الأفاتار (دائري مضبوط)
+  const ax = 35, ay = 145, asize = 120;
   ctx.fillStyle = "#0b0b0e";
   ctx.beginPath();
   ctx.arc(ax + asize / 2, ay + asize / 2, asize / 2 + 6, 0, Math.PI * 2);
@@ -84,30 +84,26 @@ async function createProfileCard(avatarUrl, bannerUrl, username) {
     } catch {}
   }
 
-  // 4. رسم شارة DND الحمراء على حافة الأفاتار
-  const sx = ax + asize - 18;
-  const sy = ay + asize - 18;
+  // 4. نقطة DND
+  const sx = ax + asize - 18, sy = ay + asize - 18;
   ctx.fillStyle = "#0b0b0e"; ctx.beginPath(); ctx.arc(sx, sy, 16, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = "#f23f43"; ctx.beginPath(); ctx.arc(sx, sy, 11, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = "#0b0b0e"; ctx.fillRect(sx - 7, sy - 3, 14, 6);
 
-  // 5. كتابة اسم السيرفر جهة اليمين بخط واضح جداً وعريض بدون دوائر
+  // 5. اسم السيرفر
   ctx.fillStyle = "#FFFFFF";
-  ctx.font = "bold 20px sans-serif";
+  ctx.font = "bold 20px Arial, sans-serif";
   ctx.textAlign = "right";
   ctx.fillText(SERVER_NAME, 565, 260);
 
-  // 6. كتابة اسم المستخدم وتوقيع الحقوق جهة اليسار تحت الأفاتار
+  // 6. اسم المستخدم والحقوق
   ctx.textAlign = "left";
-
-  // اسم صاحب الصورة
   ctx.fillStyle = "#FFFFFF"; 
-  ctx.font = "bold 26px sans-serif"; 
+  ctx.font = "bold 26px Arial, sans-serif"; 
   ctx.fillText(username, 35, 320);
 
-  // حقوق النشر (by: username)
   ctx.fillStyle = "#949ba4"; 
-  ctx.font = "16px sans-serif"; 
+  ctx.font = "16px Arial, sans-serif"; 
   ctx.fillText(`by: ${username}`, 35, 355);
 
   return canvas.toBuffer("image/png");
@@ -125,8 +121,8 @@ client.on("messageCreate", async (message) => {
   try {
     const savedFiles = [];
     for (const att of attachments) {
-      const res = await fetch(att.url);
-      savedFiles.push({ buffer: Buffer.from(await res.arrayBuffer()), fileName: att.name, url: att.url });
+      const buf = await fetchBuffer(att.url);
+      savedFiles.push({ buffer: buf, fileName: att.name, url: att.url });
     }
 
     const id = Date.now().toString(36);
@@ -140,7 +136,10 @@ client.on("messageCreate", async (message) => {
       const avatarUrl = attachments.length >= 2 ? attachments[0].url : null;
       const bannerUrl = attachments.length >= 2 ? attachments[1].url : attachments[0].url;
 
-      const buffer = await createProfileCard(avatarUrl, bannerUrl, message.author.username);
+      const avatarBuffer = avatarUrl ? await fetchBuffer(avatarUrl) : null;
+      const bannerBuffer = await fetchBuffer(bannerUrl);
+
+      const buffer = await createProfileCard(avatarBuffer, bannerBuffer, message.author.username);
 
       await message.channel.send({
         embeds: [
@@ -166,7 +165,7 @@ client.on("messageCreate", async (message) => {
 
     setTimeout(() => message.delete().catch(() => {}), 1000);
   } catch (err) {
-    console.error(err);
+    console.error("حدث خطأ أثناء المعالجة:", err);
   }
 });
 
