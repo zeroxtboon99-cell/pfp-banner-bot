@@ -1,4 +1,4 @@
-import { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } from "discord.js";
+hereimport { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } from "discord.js";
 import { createCanvas, loadImage } from "@napi-rs/canvas";
 import fs from 'fs';
 import path from 'path';
@@ -17,36 +17,36 @@ if (!fs.existsSync(IMAGES_DIR)) fs.mkdirSync(IMAGES_DIR, { recursive: true });
 
 const mediaStore = new Map();
 
-const BADGES = [
-  "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iJTIzNTg2NWYyIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIvPjx0ZXh0IHg9IjEyIiB5PSIxNiIgZm9udC1zaXplPSI4IiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPk48L3RleHQ+PC9zdmc+",
-  "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iJTIzZjQ3ZmZmIj48cGF0aCBkPSJNMTIgMmwyLjQgNy40SDIybC02IDQuNSAyLjMgNy4xLTYuMy00LjYtNi4zIDQuNiAyLjMtNy4xLTYtNC41aDcuNnoiLz48L3N2Zz4=",
-  "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vbmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iJTIzNTdmMjg3Ij48cGF0aCBkPSJNOS40IDE2LjZMNC44IDEybDQuNi00LjZMOCA2bC02IDYgNiA2IDEuNC0xLjR6bTUuMiAwbDQuNi00LjYtNC42LTQuNkwxNiA2bDYgNi02IDYtMS40LTEuNHoiLz48L3N2Zz4=",
-  "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iJTIzOWI1OWI2Ij48cGF0aCBkPSJNMTIgMkw0IDV2NmMwIDUuNTUgMy44NCAxMC43NCA4IDEyIDQuMTYtMS4yNiA4LTUuNDUgOC0xMlY1bC04LTN6bTAgNEwxNiAxMGgtM3Y2aC0ydi02SDhsNC00eiIvPjwvc3ZnPg=="
-];
+// ===== اسم السيرفر (عدله هنا) =====
+const SERVER_NAME = "𝗨𝗟𝗧𝗥𝗔︱ 𝗣𝗙𝗣'𝙨 & 𝗕𝗔𝗡𝗡𝗘𝗥'𝙨";
 
+// ===== دالة إنشاء البطاقة =====
 async function createProfileCard(avatarBuffer, bannerBuffer, username, userId) {
   const canvas = createCanvas(600, 400);
   const ctx = canvas.getContext("2d");
 
+  // خلفية داكنة
   ctx.fillStyle = "#0b0b0e";
   ctx.beginPath();
   ctx.roundRect(0, 0, 600, 400, 16);
   ctx.fill();
 
+  // ===== البانر =====
   if (bannerBuffer) {
     try {
       const bannerImg = await loadImage(bannerBuffer);
-      ctx.drawImage(bannerImg, 0, 0, 600, 210);
+      ctx.drawImage(bannerImg, 0, 0, 600, 180);
     } catch {
       ctx.fillStyle = "#2b2d31";
-      ctx.fillRect(0, 0, 600, 210);
+      ctx.fillRect(0, 0, 600, 180);
     }
   } else {
     ctx.fillStyle = "#2b2d31";
-    ctx.fillRect(0, 0, 600, 210);
+    ctx.fillRect(0, 0, 600, 180);
   }
 
-  const [ax, ay, asize] = [35, 155, 110];
+  // ===== الأفاتار =====
+  const [ax, ay, asize] = [35, 130, 110];
   ctx.fillStyle = "#0b0b0e";
   ctx.beginPath();
   ctx.arc(ax + asize / 2, ay + asize / 2, asize / 2 + 7, 0, Math.PI * 2);
@@ -64,6 +64,7 @@ async function createProfileCard(avatarBuffer, bannerBuffer, username, userId) {
     } catch {}
   }
 
+  // ===== حالة DND =====
   const [sx, sy] = [ax + asize - 15, ay + asize - 15];
   ctx.fillStyle = "#0b0b0e"; 
   ctx.beginPath(); 
@@ -76,24 +77,19 @@ async function createProfileCard(avatarBuffer, bannerBuffer, username, userId) {
   ctx.fillStyle = "#0b0b0e"; 
   ctx.fillRect(sx - 7, sy - 3, 14, 6);
 
-  const boxX = 400, boxY = 225, boxW = 170, boxH = 40;
-  ctx.fillStyle = "#111214";
-  ctx.beginPath();
-  ctx.roundRect(boxX, boxY, boxW, boxH, 8);
-  ctx.fill();
+  // ===== اسم السيرفر (بخط عريض) =====
+  ctx.fillStyle = "#FFFFFF"; 
+  ctx.font = "bold 26px Sans-Serif"; 
+  ctx.textAlign = "center";
+  ctx.fillText(SERVER_NAME, 420, 240);
 
-  let bx = boxX + 10;
-  for (const b64 of BADGES) {
-    try {
-      const img = await loadImage(b64);
-      ctx.drawImage(img, bx, boxY + 8, 24, 24);
-    } catch {}
-    bx += 31;
-  }
-
+  // ===== اسم المستخدم =====
+  ctx.textAlign = "left";
   ctx.fillStyle = "#FFFFFF"; 
   ctx.font = "bold 26px Sans-Serif"; 
   ctx.fillText(username, 35, 310);
+  
+  // ===== اليوزرنيم =====
   ctx.fillStyle = "#80848E"; 
   ctx.font = "14px Sans-Serif"; 
   ctx.fillText(`@${userId}`, 35, 340);
@@ -101,16 +97,19 @@ async function createProfileCard(avatarBuffer, bannerBuffer, username, userId) {
   return canvas.toBuffer("image/png");
 }
 
+// ===== حفظ الصور =====
 function saveImage(buffer, filename) {
   const filePath = path.join(IMAGES_DIR, filename);
   fs.writeFileSync(filePath, buffer);
   return filePath;
 }
 
+// ===== التحقق من الإدارة =====
 function isAdmin(member) {
   return member.permissions.has("Administrator");
 }
 
+// ===== أوامر البوت =====
 client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
   if (!isAdmin(message.member)) {
@@ -126,37 +125,47 @@ client.on("messageCreate", async (message) => {
     }
 
     try {
+      // تحميل الصور
       const avatarRes = await fetch(attachments[0].url);
       const bannerRes = await fetch(attachments[1].url);
       const avatarBuffer = Buffer.from(await avatarRes.arrayBuffer());
       const bannerBuffer = Buffer.from(await bannerRes.arrayBuffer());
 
+      // حفظ الصور الأصلية
       const avatarId = `avatar_${Date.now()}.png`;
       const bannerId = `banner_${Date.now()}.png`;
       saveImage(avatarBuffer, avatarId);
       saveImage(bannerBuffer, bannerId);
 
-      const cardBuffer = await createProfileCard(avatarBuffer, bannerBuffer, message.author.username, message.author.id);
+      // إنشاء البطاقة
+      const cardBuffer = await createProfileCard(
+        avatarBuffer, 
+        bannerBuffer, 
+        message.author.username, 
+        message.author.id
+      );
       const cardId = `card_${Date.now()}.png`;
       saveImage(cardBuffer, cardId);
 
+      // تخزين الصور للزر (أفاتار + بانر فقط)
       const mediaId = Date.now().toString(36);
       mediaStore.set(mediaId, {
         files: [
           { buffer: avatarBuffer, name: "avatar.png" },
-          { buffer: bannerBuffer, name: "banner.png" },
-          { buffer: cardBuffer, name: "profile_card.png" }
+          { buffer: bannerBuffer, name: "banner.png" }
         ]
       });
 
+      // زر التحميل
       const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
           .setCustomId(`dl|${mediaId}`)
           .setEmoji("📥")
-          .setLabel("تحميل الصور")
+          .setLabel("تحميل")
           .setStyle(ButtonStyle.Primary)
       );
 
+      // إرسال البطاقة
       await message.channel.send({
         embeds: [
           new EmbedBuilder()
@@ -174,90 +183,9 @@ client.on("messageCreate", async (message) => {
       await message.reply("❌ حدث خطأ!");
     }
   }
-
-  if (command === "!pfp") {
-    if (attachments.length === 0) {
-      return message.reply("⚠️ يرجى إرفاق صورة الأفاتار!");
-    }
-
-    try {
-      const res = await fetch(attachments[0].url);
-      const buffer = Buffer.from(await res.arrayBuffer());
-      const filename = `pfp_${Date.now()}.png`;
-      saveImage(buffer, filename);
-
-      const mediaId = Date.now().toString(36);
-      mediaStore.set(mediaId, {
-        files: [{ buffer, name: "avatar.png" }]
-      });
-
-      const row = new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-          .setCustomId(`dl|${mediaId}`)
-          .setEmoji("📥")
-          .setLabel("تحميل الصورة")
-          .setStyle(ButtonStyle.Primary)
-      );
-
-      await message.channel.send({
-        embeds: [
-          new EmbedBuilder()
-            .setImage(attachments[0].url)
-            .setColor("#8A2BE2")
-            .setFooter({ text: `by: ${message.author.username}` })
-        ],
-        components: [row]
-      });
-
-      await message.delete().catch(() => {});
-    } catch (error) {
-      console.error(error);
-      await message.reply("❌ حدث خطأ!");
-    }
-  }
-
-  if (command === "!banner") {
-    if (attachments.length === 0) {
-      return message.reply("⚠️ يرجى إرفاق صورة البانر!");
-    }
-
-    try {
-      const res = await fetch(attachments[0].url);
-      const buffer = Buffer.from(await res.arrayBuffer());
-      const filename = `banner_${Date.now()}.png`;
-      saveImage(buffer, filename);
-
-      const mediaId = Date.now().toString(36);
-      mediaStore.set(mediaId, {
-        files: [{ buffer, name: "banner.png" }]
-      });
-
-      const row = new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-          .setCustomId(`dl|${mediaId}`)
-          .setEmoji("📥")
-          .setLabel("تحميل الصورة")
-          .setStyle(ButtonStyle.Primary)
-      );
-
-      await message.channel.send({
-        embeds: [
-          new EmbedBuilder()
-            .setImage(attachments[0].url)
-            .setColor("#8A2BE2")
-            .setFooter({ text: `by: ${message.author.username}` })
-        ],
-        components: [row]
-      });
-
-      await message.delete().catch(() => {});
-    } catch (error) {
-      console.error(error);
-      await message.reply("❌ حدث خطأ!");
-    }
-  }
 });
 
+// ===== زر التحميل =====
 client.on("interactionCreate", async (interaction) => {
   if (!interaction.isButton()) return;
   if (!interaction.customId.startsWith("dl|")) return;
@@ -273,6 +201,7 @@ client.on("interactionCreate", async (interaction) => {
   }
 
   try {
+    // ✅ أفاتار + بانر فقط (بدون البطاقة)
     const attachments = data.files.map(f => 
       new AttachmentBuilder(f.buffer, { name: f.name })
     );
