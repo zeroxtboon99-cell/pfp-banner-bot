@@ -1,4 +1,4 @@
-const { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require("discord.js");
+const { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder, REST, Routes, SlashCommandBuilder } = require("discord.js");
 const { createCanvas, loadImage } = require("@napi-rs/canvas");
 const axios = require("axios");
 
@@ -13,13 +13,11 @@ const client = new Client({
 const mediaStore = new Map();
 const SERVER_NAME = "Ultra ︱ PFPs & Banners";
 
-// دالة جلب الصور بأمان كـ Buffer
 async function fetchBuffer(url) {
   const response = await axios.get(url, { responseType: "arraybuffer" });
   return Buffer.from(response.data);
 }
 
-// دالة قص وتغطية البانر احترافياً
 function drawImageCover(ctx, img, x, y, w, h) {
   const imgRatio = img.width / img.height;
   const targetRatio = w / h;
@@ -40,19 +38,15 @@ function drawImageCover(ctx, img, x, y, w, h) {
   ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
 }
 
-// دالة رسم كارت البروفايل
 async function createProfileCard(avatarBuffer, bannerBuffer, username) {
-  // أبعاد اللوحة الإجمالية 600x320
   const canvas = createCanvas(600, 320);
   const ctx = canvas.getContext("2d");
 
-  // 1. الخلفية السوداء للكارت
   ctx.fillStyle = "#0b0b0e";
   ctx.beginPath();
   ctx.roundRect(0, 0, 600, 320, 16);
   ctx.fill();
 
-  // 2. البانر العلوي (ارتفاع 160px)
   if (bannerBuffer) {
     try {
       const bannerImg = await loadImage(bannerBuffer);
@@ -66,10 +60,7 @@ async function createProfileCard(avatarBuffer, bannerBuffer, username) {
     ctx.fillRect(0, 0, 600, 160);
   }
 
-  // 3. الأفاتار (Avatar)
   const ax = 30, ay = 100, asize = 105;
-  
-  // حافة سوداء حول الأفاتار
   ctx.fillStyle = "#0b0b0e";
   ctx.beginPath();
   ctx.arc(ax + asize / 2, ay + asize / 2, asize / 2 + 5, 0, Math.PI * 2);
@@ -87,19 +78,16 @@ async function createProfileCard(avatarBuffer, bannerBuffer, username) {
     } catch {}
   }
 
-  // 4. حالة DND (النقطة الحمراء)
   const sx = ax + asize - 14, sy = ay + asize - 14;
   ctx.fillStyle = "#0b0b0e"; ctx.beginPath(); ctx.arc(sx, sy, 14, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = "#f23f43"; ctx.beginPath(); ctx.arc(sx, sy, 9, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = "#0b0b0e"; ctx.fillRect(sx - 5, sy - 2, 10, 4);
 
-  // 5. اسم السيرفر (في جهة اليمين مباشرة - حسب السهم الأول)
   ctx.fillStyle = "#FFFFFF";
   ctx.font = "bold 17px Arial, sans-serif";
   ctx.textAlign = "right";
   ctx.fillText(SERVER_NAME, 570, 190);
 
-  // 6. حقوق المستخدم by: username (في جهة اليسار أسفل الكارت - حسب السهم الثاني)
   ctx.textAlign = "left";
   ctx.fillStyle = "#FFFFFF"; 
   ctx.font = "bold 20px Arial, sans-serif"; 
@@ -107,6 +95,53 @@ async function createProfileCard(avatarBuffer, bannerBuffer, username) {
 
   return canvas.toBuffer("image/png");
 }
+
+// عند تشغيل البوت: تسجيل أمر Slash تلقائياً
+client.once("ready", async () => {
+  console.log(`✅ البوت يعمل بنجاح كـ ${client.user.tag}`);
+  
+  const commands = [
+    new SlashCommandBuilder()
+      .setName("active")
+      .setDescription("أمر للحصول على شارة Active Developer")
+  ];
+
+  const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_TOKEN);
+  try {
+    await rest.put(
+      Routes.applicationCommands(client.user.id),
+      { body: commands }
+    );
+    console.log("✅ تم تسجيل أمر Slash (/active) بنجاح!");
+  } catch (error) {
+    console.error("خطأ في تسجيل أمر Slash:", error);
+  }
+});
+
+// التعامل مع أوامر الـ Slash
+client.on("interactionCreate", async (interaction) => {
+  if (interaction.isChatInputCommand()) {
+    if (interaction.commandName === "active") {
+      await interaction.reply({ 
+        content: "✅ تم تسجيل استخدام الأمر بنجاح! انتظر الآن من 24 إلى 48 ساعة لتفعيل الشارة من موقع ديسكورد.", 
+        ephemeral: true 
+      });
+    }
+    return;
+  }
+
+  // التعامل مع زر التحميل
+  if (interaction.isButton() && interaction.customId.startsWith("dl|")) {
+    const files = mediaStore.get(interaction.customId.split("|")[1]);
+    if (!files) return interaction.reply({ content: "❌ تعذر العثور على الصور.", ephemeral: true });
+
+    await interaction.deferReply({ ephemeral: true });
+    const atts = files.map((f) => new AttachmentBuilder(f.buffer, { name: f.fileName }));
+    
+    try { await interaction.user.send({ content: "📥 **الملفات الأصلية:**", files: atts }); } catch {}
+    await interaction.editReply({ content: "📥 **تفضل الصور:**", files: atts });
+  }
+});
 
 client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
@@ -166,20 +201,6 @@ client.on("messageCreate", async (message) => {
   } catch (err) {
     console.error("خطأ:", err);
   }
-});
-
-client.on("interactionCreate", async (i) => {
-  if (!i.isButton() || !i.customId.startsWith("dl|")) return;
-
-  const files = mediaStore.get(i.customId.split("|")[1]);
-  if (!files) return i.reply({ content: "❌ تعذر العثور على الصور.", ephemeral: true });
-
-  await i.deferReply({ ephemeral: true });
-
-  const atts = files.map((f) => new AttachmentBuilder(f.buffer, { name: f.fileName }));
-  
-  try { await i.user.send({ content: "📥 **الملفات الأصلية:**", files: atts }); } catch {}
-  await i.editReply({ content: "📥 **تفضل الصور:**", files: atts });
 });
 
 client.login(process.env.DISCORD_TOKEN);
