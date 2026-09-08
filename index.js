@@ -11,10 +11,10 @@ const client = new Client({
 
 const mediaStore = new Map();
 
-// اسم السيرفر المخصص
-const SERVER_NAME = "𝗨𝗟𝗧𝗥𝗔︱ 𝗣𝗙𝗣'𝙨 & 𝗕𝗔𝗡𝗡𝗘𝗥'𝙨";
+// اسم السيرفر بدون خطوط معقدة لضمان ظهوره كاملاً
+const SERVER_NAME = "Ultra ︱ PFPs & Banners";
 
-// دالة لقص وتغطية البانر تلقائياً (Object-Fit: Cover)
+// دالة قص وتغطية البانر ليلائم المساحة بدقة
 function drawImageCover(ctx, img, x, y, w, h) {
   const imgRatio = img.width / img.height;
   const targetRatio = w / h;
@@ -37,13 +37,13 @@ function drawImageCover(ctx, img, x, y, w, h) {
 
 // دالة تصميم وصنع الكارت
 async function createProfileCard(avatarUrl, bannerUrl, username) {
-  const canvas = createCanvas(600, 400);
+  const canvas = createCanvas(600, 380);
   const ctx = canvas.getContext("2d");
 
   // 1. خلفية الكارت الرئيسية
   ctx.fillStyle = "#0b0b0e";
   ctx.beginPath();
-  ctx.roundRect(0, 0, 600, 400, 16);
+  ctx.roundRect(0, 0, 600, 380, 16);
   ctx.fill();
 
   // 2. البانر العلوي
@@ -61,10 +61,10 @@ async function createProfileCard(avatarUrl, bannerUrl, username) {
   }
 
   // 3. الأفاتار (Avatar)
-  const [ax, ay, asize] = [35, 155, 110];
+  const [ax, ay, asize] = [30, 150, 105];
   ctx.fillStyle = "#0b0b0e";
   ctx.beginPath();
-  ctx.arc(ax + asize / 2, ay + asize / 2, asize / 2 + 7, 0, Math.PI * 2);
+  ctx.arc(ax + asize / 2, ay + asize / 2, asize / 2 + 6, 0, Math.PI * 2);
   ctx.fill();
 
   if (avatarUrl) {
@@ -80,41 +80,29 @@ async function createProfileCard(avatarUrl, bannerUrl, username) {
   }
 
   // 4. حالة DND الحمراء
-  const [sx, sy] = [ax + asize - 15, ay + asize - 15];
-  ctx.fillStyle = "#0b0b0e"; ctx.beginPath(); ctx.arc(sx, sy, 16, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = "#f23f43"; ctx.beginPath(); ctx.arc(sx, sy, 11, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = "#0b0b0e"; ctx.fillRect(sx - 7, sy - 3, 14, 6);
+  const [sx, sy] = [ax + asize - 14, ay + asize - 14];
+  ctx.fillStyle = "#0b0b0e"; ctx.beginPath(); ctx.arc(sx, sy, 15, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#f23f43"; ctx.beginPath(); ctx.arc(sx, sy, 10, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#0b0b0e"; ctx.fillRect(sx - 6, sy - 2.5, 12, 5);
 
-  // 5. الشارات
-  const badgeY = 255;
-  const badgeX = 520;
-
-  ctx.fillStyle = "#9b59b6";
-  ctx.beginPath();
-  ctx.arc(badgeX, badgeY, 12, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.fillStyle = "#57f287";
-  ctx.beginPath();
-  ctx.arc(badgeX + 30, badgeY, 12, 0, Math.PI * 2);
-  ctx.fill();
-
-  // 6. اسم السيرفر
+  // 5. كتابة اسم السيرفر جهة اليمين بخط عريض ومكان الشارات القديمة
   ctx.fillStyle = "#FFFFFF";
-  ctx.font = "bold 16px Sans-Serif";
+  ctx.font = "bold 18px Arial, sans-serif";
   ctx.textAlign = "right";
-  ctx.fillText(SERVER_NAME, 570, badgeY + 40);
+  ctx.fillText(SERVER_NAME, 570, 250);
 
+  // 6. اسم المستخدم والتوقيع جهة اليسار (أسفل الأفاتار)
   ctx.textAlign = "left";
 
-  // 7. اسم المستخدم والتوقيع
+  // اسم المستخدم الرئيسي
   ctx.fillStyle = "#FFFFFF"; 
-  ctx.font = "bold 26px Sans-Serif"; 
-  ctx.fillText(username, 35, 310);
+  ctx.font = "bold 22px Arial, sans-serif"; 
+  ctx.fillText(username, 30, 295);
 
-  ctx.fillStyle = "#80848E"; 
-  ctx.font = "14px Sans-Serif"; 
-  ctx.fillText(`by: ${username}`, 35, 340);
+  // التوقيع (by: username)
+  ctx.fillStyle = "#949ba4"; 
+  ctx.font = "14px Arial, sans-serif"; 
+  ctx.fillText(`by: ${username}`, 30, 325);
 
   return canvas.toBuffer("image/png");
 }
@@ -191,3 +179,4 @@ client.on("interactionCreate", async (i) => {
 });
 
 client.login(process.env.DISCORD_TOKEN);
+
