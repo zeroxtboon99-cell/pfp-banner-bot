@@ -1,14 +1,15 @@
-Enter{
+{
   "name": "discord-profile-bot",
   "version": "1.0.0",
-  "main": "index.ts",
+  "main": "index.js",
   "scripts": {
-    "start": "ts-node index.ts"
+    "start": "node index.js"
   },
   "dependencies": {
     "@napi-rs/canvas": "^0.1.52",
-    "discord.js": "^14.14.1",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.3.3"
+    "discord.js": "^14.14.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
