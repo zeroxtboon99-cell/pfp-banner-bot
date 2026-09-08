@@ -1,5 +1,5 @@
-Enterimport { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } from "discord.js";
-import { createCanvas, loadImage } from "@napi-rs/canvas";
+const { Client, GatewayIntentBits, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, AttachmentBuilder } = require("discord.js");
+const { createCanvas, loadImage } = require("@napi-rs/canvas");
 
 const client = new Client({ 
   intents: [
@@ -9,13 +9,13 @@ const client = new Client({
   ] 
 });
 
-const mediaStore = new Map<string, Array<{ buffer: Buffer; fileName: string; url: string }>>();
+const mediaStore = new Map();
 
 // اسم السيرفر المخصص
 const SERVER_NAME = "𝗨𝗟𝗧𝗥𝗔︱ 𝗣𝗙𝗣'𝙨 & 𝗕𝗔𝗡𝗡𝗘𝗥'𝙨";
 
-// دالة لقص وتغطية البانر تلقائياً (Object-Fit: Cover) لمنع التمطيط
-function drawImageCover(ctx: any, img: any, x: number, y: number, w: number, h: number) {
+// دالة لقص وتغطية البانر تلقائياً (Object-Fit: Cover)
+function drawImageCover(ctx, img, x, y, w, h) {
   const imgRatio = img.width / img.height;
   const targetRatio = w / h;
   let sw, sh, sx, sy;
@@ -36,7 +36,7 @@ function drawImageCover(ctx: any, img: any, x: number, y: number, w: number, h: 
 }
 
 // دالة تصميم وصنع الكارت
-async function createProfileCard(avatarUrl: string | null, bannerUrl: string | null, username: string): Promise<Buffer> {
+async function createProfileCard(avatarUrl, bannerUrl, username) {
   const canvas = createCanvas(600, 400);
   const ctx = canvas.getContext("2d");
 
@@ -46,7 +46,7 @@ async function createProfileCard(avatarUrl: string | null, bannerUrl: string | n
   ctx.roundRect(0, 0, 600, 400, 16);
   ctx.fill();
 
-  // 2. البانر العلوي مع ضبط العرض والتغطية
+  // 2. البانر العلوي
   if (bannerUrl) {
     try {
       const bannerImg = await loadImage(bannerUrl);
@@ -85,7 +85,7 @@ async function createProfileCard(avatarUrl: string | null, bannerUrl: string | n
   ctx.fillStyle = "#f23f43"; ctx.beginPath(); ctx.arc(sx, sy, 11, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = "#0b0b0e"; ctx.fillRect(sx - 7, sy - 3, 14, 6);
 
-  // 5. الشارات (موقعها في المنتصف الأسفل)
+  // 5. الشارات
   const badgeY = 255;
   const badgeX = 520;
 
@@ -99,13 +99,12 @@ async function createProfileCard(avatarUrl: string | null, bannerUrl: string | n
   ctx.arc(badgeX + 30, badgeY, 12, 0, Math.PI * 2);
   ctx.fill();
 
-  // 6. اسم السيرفر بخط عريض تحت الشارات مباشرة
+  // 6. اسم السيرفر
   ctx.fillStyle = "#FFFFFF";
   ctx.font = "bold 16px Sans-Serif";
   ctx.textAlign = "right";
   ctx.fillText(SERVER_NAME, 570, badgeY + 40);
 
-  // إعادة ضبط المحاذاة للنصوص السفلية
   ctx.textAlign = "left";
 
   // 7. اسم المستخدم والتوقيع
@@ -139,7 +138,7 @@ client.on("messageCreate", async (message) => {
     const id = Date.now().toString(36);
     mediaStore.set(id, savedFiles);
 
-    const btn = new ActionRowBuilder<ButtonBuilder>().addComponents(
+    const btn = new ActionRowBuilder().addComponents(
       new ButtonBuilder().setCustomId(`dl|${id}`).setEmoji("📥").setStyle(ButtonStyle.Secondary)
     );
 
