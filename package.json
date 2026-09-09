@@ -1,14 +1,15 @@
 {
   "name": "discord-profile-bot",
   "version": "1.0.0",
+  "description": "Discord Bot for generating Discord-like profile card, PFP, and Banners with download buttons.",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
-    "@napi-rs/canvas": "^0.1.52",
-    "axios": "^1.6.8",
-    "discord.js": "^14.14.1"
+    "canvacord": "^5.4.10",
+    "discord.js": "^14.14.1",
+    "dotenv": "^16.4.5"
   },
   "engines": {
     "node": ">=18.0.0"
